@@ -29,11 +29,19 @@
         <field name="state">code</field>
         <field name="code">model.cron_get_top_customers()</field>
         <field name="interval_number">1</field>
-        <field name="interval_type">minutes</field>
+        <field name="interval_type">hours</field>
+    </record>
+    <record id="action_sync_and_open_dashboard" model="ir.actions.server">
+        <field name="name">Sync and Open Dashboard</field>
+        <field name="model_id" ref="model_res_partner_customer_metrics"/>
+        <field name="state">code</field>
+        <field name="code">
+            action = model.cron_get_top_customers()
+        </field>
     </record>
     <menuitem id="menu_customer_metrics"
               name="Top Customers Dashboard"
-              action="action_customer_metrics"
+              action="action_sync_and_open_dashboard"
               parent="sale.sale_menu_root"
               sequence="50"/>
 </odoo>

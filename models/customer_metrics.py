@@ -9,7 +9,7 @@ class CustomerMetrics(models.Model):
     total_sales = fields.Float(string="Total Sales", compute='_compute_sales_metrics', store=True)
     order_count = fields.Integer(string="Order Count", compute='_compute_sales_metrics', store=True)
 
-    @api.depends('customer_id', 'customer_id.sale_order_ids.state', 'customer_id.sale_order_ids.amount_total')
+    @api.depends('customer_id')
     def _compute_sales_metrics(self):
         for rec in self:
             if not rec.customer_id:
@@ -32,14 +32,12 @@ class CustomerMetrics(models.Model):
             order='amount_total:sum desc',
             limit=5
         )
-
         current_top_ids = [partner.id for partner, total in top_sales]
-
         self.search([('customer_id', 'not in', current_top_ids)]).unlink()
-
         for p_id in current_top_ids:
             if not self.search([('customer_id', '=', p_id)]):
                 self.create({'customer_id': p_id})
+        return self.env["ir.actions.actions"]._for_xml_id("customer_metrics.action_customer_metrics")
 
     def action_refresh_now(self):
         self.cron_get_top_customers()
