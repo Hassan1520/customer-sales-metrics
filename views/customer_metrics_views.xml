@@ -1,26 +1,39 @@
 <odoo>
     <record id="view_partner_sales_metrics_tree" model="ir.ui.view">
         <field name="name">res.partner.sales.metrics.tree</field>
-        <field name="model">res.partner</field>
+        <field name="model">res.partner.customer.metrics</field>
         <field name="arch" type="xml">
             <list default_order="total_sales desc" create="false">
-                <field name="name" string="Customer Name"/>
+                <header>
+                    <button name="action_refresh_now"
+                            string="Refresh Dashboard"
+                            type="object"
+                            class="btn-primary"/>
+                </header>
+                <field name="customer_id" string="Customer Name"/>
                 <field name="total_sales" string="Total Sales" widget="monetary"/>
                 <field name="order_count" string="Orders Count"/>
             </list>
         </field>
     </record>
-
     <record id="action_customer_metrics" model="ir.actions.act_window">
-        <field name="name">Top Customers</field>
-        <field name="res_model">res.partner</field>
+        <field name="name">Top 5 Customers</field>
+        <field name="res_model">res.partner.customer.metrics</field>
         <field name="view_mode">list</field>
-        <field name="context">{'order_by': 'total_sales desc'}</field>
         <field name="domain">[('total_sales', '>', 0)]</field>
-        <field name="view_id" ref="view_partner_sales_metrics_tree"/>
+        <field name="limit">5</field>
     </record>
-
+    <record id="ir_cron_update_customer_dashboard" model="ir.cron">
+        <field name="name">Customer Metrics: Auto Update Top 5</field>
+        <field name="model_id" ref="model_res_partner_customer_metrics"/>
+        <field name="state">code</field>
+        <field name="code">model.cron_get_top_customers()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">minutes</field>
+    </record>
     <menuitem id="menu_customer_metrics"
               name="Top Customers Dashboard"
-              action="action_customer_metrics" sequence="10"/>
+              action="action_customer_metrics"
+              parent="sale.sale_menu_root"
+              sequence="50"/>
 </odoo>

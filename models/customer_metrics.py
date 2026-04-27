@@ -5,40 +5,41 @@ class CustomerMetrics(models.Model):
     _name = 'res.partner.customer.metrics'
     _description = 'Customer Sales Metrics'
 
-    customer_id = fields.Many2one('res.partner', string="Customer", required=True)
+    customer_id = fields.Many2one('res.partner', string="Customer")
+    total_sales = fields.Float(string="Total Sales", compute='_compute_sales_metrics', store=True)
+    order_count = fields.Integer(string="Order Count", compute='_compute_sales_metrics', store=True)
 
-    total_sales = fields.Float(
-        string="Total Sales",
-        compute='_compute_metrics',
-        store=True
-    )
-
-    order_count = fields.Integer(
-        string="Order Count",
-        compute='_compute_metrics',
-        store=True
-    )
-
-    @api.depends('customer_id')
-    def _compute_metrics(self):
+    @api.depends('customer_id', 'customer_id.sale_order_ids.state', 'customer_id.sale_order_ids.amount_total')
+    def _compute_sales_metrics(self):
         for rec in self:
+            if not rec.customer_id:
+                rec.total_sales = 0
+                rec.order_count = 0
+                continue
             orders = self.env['sale.order'].search([
                 ('partner_id', '=', rec.customer_id.id),
                 ('state', 'in', ['sale', 'done'])
             ])
-
             rec.total_sales = sum(orders.mapped('amount_total'))
             rec.order_count = len(orders)
 
-    def get_top_customers(self):
-        records = self.search([], order='total_sales desc', limit=5)
+    @api.model
+    def cron_get_top_customers(self):
+        top_sales = self.env['sale.order']._read_group(
+            domain=[('state', 'in', ['sale', 'done'])],
+            groupby=['partner_id'],
+            aggregates=['amount_total:sum'],
+            order='amount_total:sum desc',
+            limit=5
+        )
 
-        result = []
-        for rec in records:
-            result.append({
-                'name': rec.customer_id.name,
-                'total_sales': rec.total_sales,
-                'order_count': rec.order_count,
-            })
+        current_top_ids = [partner.id for partner, total in top_sales]
 
-        return result
+        self.search([('customer_id', 'not in', current_top_ids)]).unlink()
+
+        for p_id in current_top_ids:
+            if not self.search([('customer_id', '=', p_id)]):
+                self.create({'customer_id': p_id})
+
+    def action_refresh_now(self):
+        self.cron_get_top_customers()

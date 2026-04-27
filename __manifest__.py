@@ -3,7 +3,7 @@
     "version": "19.0.1.0.0",
     "summary": "Dashboard for top customer sales metrics",
     "category": "Sales",
-    "author": "Custom",
+    "author": "Hassan",
     "license": "LGPL-3",
     "depends": ["sale"],
     "data": [
