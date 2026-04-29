@@ -43,6 +43,5 @@
               name="Top Customers Dashboard"
               action="action_sync_and_open_dashboard"
               parent="sale.sale_menu_root"
-              sequence="50"
-    />
+              sequence="50"/>
 </odoo>

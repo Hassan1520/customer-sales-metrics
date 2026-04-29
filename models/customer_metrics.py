@@ -37,7 +37,6 @@ class CustomerMetrics(models.Model):
         for p_id in current_top_ids:
             if not self.search([('customer_id', '=', p_id)]):
                 self.create({'customer_id': p_id})
-
         return self.env["ir.actions.actions"]._for_xml_id("customer_metrics.action_customer_metrics")
 
     def action_refresh_now(self):
